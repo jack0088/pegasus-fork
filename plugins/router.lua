@@ -91,7 +91,7 @@ function Router:resolve(method, path, ...)
   return resolve(path, node, merge_params(...))
 end
 
--- Override router class method
+-- Override router class method to work with Pegasus request/response objects
 function Router:execute(request, response)
   local path = request:path()
   local method, err = request:method()
@@ -101,14 +101,14 @@ function Router:execute(request, response)
   return true, handler(request, response, params)
 end
 
--- Overwrite plugin method to use Pegasus handler with request/response
+-- Overwrite Pegasus plugin method to use request/response with handler
 function Router:newRequestResponse(request, response)
   return self:execute(request, response)
 end
 
-function Router:match(method, path, fun)
-  if type(method) == "string" then -- always make the method to table.
-    method = {[method] = {[path] = fun}}
+function Router:match(method, path, f)
+  if type(method) == "string" then -- always make the method to table
+    method = {[method] = {[path] = f}}
   end
   for m, routes in pairs(method) do
     for p, f in pairs(routes) do
@@ -118,12 +118,14 @@ function Router:match(method, path, fun)
   end
 end
 
+-- Make http request methods (get, post, ...) be also class functions (:get(), post(), ...)
 for _,method in ipairs(HTTP_METHODS) do
   Router[method] = function(self, path, f)  -- Router.get = function(self, path, f)
     self:match(method:upper(), path, f)     --   return self:match("GET", path, f)
   end                                       -- end
 end
 
+-- Extend http request methods (get, post, ...) by this wildcard method/function (:any(), :get(), :post(), ...)
 Router["any"] = function(self, path, f)     -- match any method
   for _,method in ipairs(HTTP_METHODS) do
     self:match(method:upper(), path, function(params) return f(params, method) end)
