@@ -3,10 +3,11 @@
 -- 2018 (c) kontakt@herrsch.de
 
 local Resolver = require "router"
+
 local Router = {}
-Router.__index = Resolver
 
 function Router:new()
+  self.__index = Resolver:new()
   return setmetatable({}, self)
 end
 

@@ -2,7 +2,7 @@
 -- install generic Router dependency globally https://github.com/moteus/lua-pegasus-router/blob/master/src/pegasus/plugins/router.lua
 -- run server with `lua main.lua`
 
--- TODO finish plugin in plugins.router
+-- TODO finish plugin in plugins.router (original router project https://github.com/moteus/lua-pegasus-router/blob/master/src/pegasus/plugins/router.lua)
 -- TODO maybe have all dependencies installed locally for version control?
 
 local pretty = require "pretty"
@@ -13,7 +13,7 @@ local route = router:new()
 print(route.execute, route.newRequestResponse, route.match, route.get, router.newRequestResponse)
 
 local server = pegasus:new{
-  plugins = {route},
+  plugins = {router},
   location = "~/.code/ru2/",
   port = "8888"
 }
