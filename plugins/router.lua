@@ -1,3 +1,9 @@
+-- This plugin unit is a rewrite of two libraries
+-- [1] the general purpose http router for Lua https://luarocks.org/modules/kikito/router
+-- [2] and the Pegasus router https://luarocks.org/modules/moteus/pegasus-router
+-- Credit the corresponding owners
+-- Rewrite 2018 (c) kontakt@herrsch.de
+
 local COLON_BYTE = string.byte(":", 1)
 local WILDCARD_BYTE = string.byte("*", 1)
 local HTTP_METHODS = {"get", "post", "put", "patch", "delete", "trace", "connect", "options", "head"}
@@ -75,35 +81,6 @@ end
 local Router = {}
 Router.__index = Router
 
-Router._VERSION = "v2.1.0",
-Router._DESCRIPTION = "A simple Lua router",
-Router._LICENSE = [[
-  MIT LICENSE
-
-  * Copyright (c) 2013 Enrique García Cota
-  * Copyright (c) 2013 Raimon Grau
-  * Copyright (c) 2015 Lloyd Zhou
-
-  Permission is hereby granted, free of charge, to any person obtaining a
-  copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-
-  The above copyright notice and this permission notice shall be included
-  in all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-]]
-
 function Router:new()
   return setmetatable({_tree = {}}, self)
 end
@@ -113,14 +90,6 @@ function Router:resolve(method, path, ...)
   if not node then return nil, ("Unknown method: %s"):format(tostring(method)) end
   return resolve(path, node, merge_params(...))
 end
-
---[[
-function Router:execute(method, path, ...)
-  local f,params = self:resolve(method, path, ...)
-  if not f then return nil, ("Could not resolve %s %s - %s"):format(tostring(method), tostring(path), tostring(params)) end
-  return true, f(params)
-end
---]]
 
 -- Override router class method
 function Router:execute(request, response)
