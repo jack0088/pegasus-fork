@@ -1,3 +1,10 @@
+-- install Pegasus http server dependency globally https://github.com/EvandroLG/pegasus.lua
+-- install generic Router dependency globally https://github.com/moteus/lua-pegasus-router/blob/master/src/pegasus/plugins/router.lua
+-- run server with `lua main.lua`
+
+-- TODO finish plugin in plugins.router
+-- TODO maybe have all dependencies installed locally for version control?
+
 local pretty = require "pretty"
 local pegasus = require "pegasus"
 local router  = require "plugins.router"
