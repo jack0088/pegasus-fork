@@ -1,34 +1,31 @@
-local socket = require 'socket'
-local Handler = require 'pegasus.handler'
+local socket = require "socket"
+local class = require("class").class
+local Handler = require "pegasus.handler"
 
+local Pegasus = class()
 
-local Pegasus = {}
-Pegasus.__index = Pegasus
-
-function Pegasus:new(params)
-  params = params or {}
-  local server = {}
-
-  server.host = params.host or '*'
-  server.port = params.port or '9090'
-  server.location = params.location or ''
-  server.plugins = params.plugins or {}
-  server.timeout = params.timeout or 1
-
-  return setmetatable(server, self)
+function Pegasus:new(settings)
+    settings = settings or {}
+    self.host = settings.host or "*"
+    self.port = settings.port or 8888
+    self.location = settings.location or ""
+    self.plugins = settings.plugins or {}
+    self.timeout = settings.timeout or 1
+    return self
 end
 
 function Pegasus:start(callback)
-  local handler = Handler:new(callback, self.location, self.plugins)
-  local server = assert(socket.bind(self.host, self.port))
-  local ip, port = server:getsockname()
-  print('Pegasus is up on ' .. ip .. ":".. port)
+    local handler = Handler(callback, self.location, self.plugins)
+    local server = assert(socket.bind(self.host, self.port))
+    local ip, port = server:getsockname()
 
-  while 1 do
-    local client = server:accept()
-    client:settimeout(self.timeout, 'b')
-    handler:processRequest(self.port, client)
-  end
+    print(string.format("Pegasus is up on %s:%s", ip, port))
+
+    while true do
+        local client = server:accept()
+        client:settimeout(self.timeout, "b")
+        handler:processRequest(self.port, client)
+    end
 end
 
 return Pegasus

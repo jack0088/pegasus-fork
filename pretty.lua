@@ -1,5 +1,4 @@
-local function empty(t) return next(t) == nil end
-local function tostr(tab, recurse, indent)
+local function concanate(tab, recurse, indent)
     local res = ''
 
     if not indent then
@@ -20,7 +19,7 @@ local function tostr(tab, recurse, indent)
             return formatting .. '(nil)'
         elseif type(v) == "table" then
             if recurse and recurse > 0 then
-                return formatting .. '\n' .. tostr(v, recurse-1, i+1)
+                return formatting .. '\n' .. concanate(v, recurse-1, i+1)
             else
                 return formatting .. "<table>"
             end
@@ -44,7 +43,7 @@ local function tostr(tab, recurse, indent)
 
         -- add the meta table.
         local mt = getmetatable(tab)
-        if mt and not empty(mt) then
+        if mt and not next(mt) == nil then
             res = res .. format_value('__metatable', mt, indent)
             first = false
         end
@@ -66,4 +65,4 @@ local function tostr(tab, recurse, indent)
     return res
 end
 
-return tostr
+return concanate
