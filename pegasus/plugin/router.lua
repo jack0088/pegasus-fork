@@ -94,7 +94,7 @@ end
 
 -- Override router class method to work with Pegasus request/response objects
 function Router:execute(request, response)
-    local url = request:url()
+    local url = request:path()
     local method, err = request:method()
     local handler, params = self:resolve(method, url)
     if not method then return nil, err end
