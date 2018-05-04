@@ -8,10 +8,10 @@ local COLON_BYTE = string.byte(":", 1)
 local WILDCARD_BYTE = string.byte("*", 1)
 local HTTP_METHODS = {"get", "post", "put", "patch", "delete", "trace", "connect", "options", "head"}
 
-local function match_one_path(node, path, f)
-    for token in path:gmatch("[^/.]+") do
+local function match_one_path(node, url, callback)
+    for token in url:gmatch("[^/.]+") do
         if WILDCARD_BYTE == token:byte(1) then
-            node["WILDCARD"] = {["LEAF"] = f, ["TOKEN"] = token:sub(2)}
+            node["WILDCARD"] = {["LEAF"] = callback, ["TOKEN"] = token:sub(2)}
             return
         end
         if COLON_BYTE == token:byte(1) then -- if match the ":", store the param_name in "TOKEN" array.
@@ -22,11 +22,11 @@ local function match_one_path(node, path, f)
         node[token] = node[token] or {}
         node = node[token]
     end
-    node["LEAF"] = f
+    node["LEAF"] = callback
 end
 
-local function resolve(path, node, params)
-    local _, _, current_token, rest = path:find("([^/.]+)(.*)")
+local function resolve(url, node, params)
+    local _, _, current_token, rest = url:find("([^/.]+)(.*)")
     if not current_token then return node["LEAF"], params end
 
     if node["WILDCARD"] then
@@ -35,16 +35,16 @@ local function resolve(path, node, params)
     end
 
     if node[current_token] then
-        local f, bindings = resolve(rest, node[current_token], params)
-        if f then return f, bindings end
+        local callback, bindings = resolve(rest, node[current_token], params)
+        if callback then return callback, bindings end
     end
 
     for param_name, child_node in pairs(node["TOKEN"] or {}) do
         local param_value = params[param_name]
-        params[param_name] = current_token or param_value -- store the value in params, resolve tail path
+        params[param_name] = current_token or param_value -- store the value in params, resolve tail url
 
-        local f, bindings = resolve(rest, child_node, params)
-        if f then return f, bindings end
+        local callback, bindings = resolve(rest, child_node, params)
+        if callback then return callback, bindings end
 
         params[param_name] = param_value -- reset the params table.
     end
@@ -86,17 +86,17 @@ function Router:new()
     return self
 end
 
-function Router:resolve(method, path, ...)
+function Router:resolve(method, url, ...)
     local node = self._tree[method]
     if not node then return nil, ("Unknown method: %s"):format(tostring(method)) end
-    return resolve(path, node, merge_params(...))
+    return resolve(url, node, merge_params(...))
 end
 
 -- Override router class method to work with Pegasus request/response objects
 function Router:execute(request, response)
-    local path = request:path()
+    local url = request:url()
     local method, err = request:method()
-    local handler, params = self:resolve(method, path)
+    local handler, params = self:resolve(method, url)
     if not method then return nil, err end
     if not handler then return false end
     return true, handler(request, response, params)
@@ -107,30 +107,30 @@ function Router:newRequestResponse(request, response)
     return self:execute(request, response)
 end
 
-function Router:match(method, path, f)
+function Router:match(method, url, callback)
     if type(method) == "string" then -- always make the method to table
-        method = {[method] = {[path] = f}}
+        method = {[method] = {[url] = callback}}
     end
     for m, routes in pairs(method) do
-        for p, f in pairs(routes) do
+        for p, c in pairs(routes) do
             if not self._tree[m] then self._tree[m] = {} end
-            match_one_path(self._tree[m], p, f)
+            match_one_path(self._tree[m], p, c)
         end
     end
 end
 
 -- Make http request methods (get, post, ...) be also class functions (:get(), post(), ...)
 for _,method in ipairs(HTTP_METHODS) do
-    Router[method] = function(self, path, f) -- Router.get = function(self, path, f)
-        self:match(method:upper(), path, f)  --   return self:match("GET", path, f)
+    Router[method] = function(self, url, callback) -- Router.get = function(self, url, callback)
+        self:match(method:upper(), url, callback)  --   return self:match("GET", url, callback)
     end                                      -- end
 end
 
 -- Extend http request methods to match ANY of the HTTP_METHODS, e.g. both GET and POST
-Router["any"] = function(self, path, f)
+Router["any"] = function(self, url, callback)
     for _, method in ipairs(HTTP_METHODS) do
-        --self:match(method:upper(), path, function(params) return f(params, method) end)
-        self:match(method:upper(), path, f)
+        --self:match(method:upper(), url, function(params) return callback(params, method) end)
+        self:match(method:upper(), url, callback)
     end
 end
 
