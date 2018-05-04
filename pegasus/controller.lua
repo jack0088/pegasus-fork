@@ -9,9 +9,9 @@ local function ternary(condition, t, f)
     if condition then return t else return f end
 end
 
-local Handler = class()
+local Controller = class()
 
-function Handler:new(callback, location, plugins)
+function Controller:new(callback, location, plugins)
     self.callback = callback
     self.location = location or ""
     self.plugins = plugins or {}
@@ -19,7 +19,7 @@ function Handler:new(callback, location, plugins)
     return self
 end
 
-function Handler:pluginsAlterRequestResponseMetatable()
+function Controller:pluginsAlterRequestResponseMetatable()
     for _, plugin in ipairs(self.plugins) do
         if plugin.alterRequestResponseMetaTable then
             local stop = plugin:alterRequestResponseMetaTable(Request, Response)
@@ -30,7 +30,7 @@ function Handler:pluginsAlterRequestResponseMetatable()
     end
 end
 
-function Handler:pluginsNewRequestResponse(request, response)
+function Controller:pluginsNewRequestResponse(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.newRequestResponse then
             local stop = plugin:newRequestResponse(request, response)
@@ -41,7 +41,7 @@ function Handler:pluginsNewRequestResponse(request, response)
     end
 end
 
-function Handler:pluginsBeforeProcess(request, response)
+function Controller:pluginsBeforeProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.beforeProcess then
             local stop = plugin:beforeProcess(request, response)
@@ -52,7 +52,7 @@ function Handler:pluginsBeforeProcess(request, response)
     end
 end
 
-function Handler:pluginsAfterProcess(request, response)
+function Controller:pluginsAfterProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.afterProcess then
             local stop = plugin:afterProcess(request, response)
@@ -63,7 +63,7 @@ function Handler:pluginsAfterProcess(request, response)
     end
 end
 
-function Handler:pluginsProcessFile(request, response, filename)
+function Controller:pluginsProcessFile(request, response, filename)
     for _, plugin in ipairs(self.plugins) do
         if plugin.processFile then
             local stop = plugin:processFile(request, response, filename)
@@ -74,7 +74,7 @@ function Handler:pluginsProcessFile(request, response, filename)
     end
 end
 
-function Handler:processBodyData(data, stayOpen, response)
+function Controller:processBodyData(data, stayOpen, response)
     local localData = data
 
     for _, plugin in ipairs(self.plugins or {}) do
@@ -86,7 +86,7 @@ function Handler:processBodyData(data, stayOpen, response)
     return localData
 end
 
-function Handler:processRequest(port, client)
+function Controller:processRequest(port, client)
     local request = Request(port, client)
 
     if not request:method() then
@@ -138,4 +138,4 @@ function Handler:processRequest(port, client)
 end
 
 
-return Handler
+return Controller

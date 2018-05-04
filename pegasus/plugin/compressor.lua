@@ -12,7 +12,7 @@ local z_lib_name = assert(check_zlib_name(zlib), "Unsupported zlib Lua binding")
 
 local class = require("class").class
 local ZlibStream = class()
-local Compress = class()
+local Compressor = class()
 
 ZlibStream.NO_COMPRESSION = zlib.NO_COMPRESSION or 0
 ZlibStream.BEST_SPEED = zlib.BEST_SPEED or 1
@@ -21,10 +21,10 @@ ZlibStream.DEFAULT_COMPRESSION = zlib.DEFAULT_COMPRESSION or -1
 ZlibStream.STORE = 0
 ZlibStream.DEFLATE = 8
 
-Compress.NO_COMPRESSION = ZlibStream.NO_COMPRESSION
-Compress.BEST_SPEED = ZlibStream.BEST_SPEED
-Compress.BEST_COMPRESSION = ZlibStream.BEST_COMPRESSION
-Compress.DEFAULT_COMPRESSION = ZlibStream.DEFAULT_COMPRESSION
+Compressor.NO_COMPRESSION = ZlibStream.NO_COMPRESSION
+Compressor.BEST_SPEED = ZlibStream.BEST_SPEED
+Compressor.BEST_COMPRESSION = ZlibStream.BEST_COMPRESSION
+Compressor.DEFAULT_COMPRESSION = ZlibStream.DEFAULT_COMPRESSION
 
 if z_lib_name == "lzlib" then
     function ZlibStream:new(writer, level, method, windowBits)
@@ -63,12 +63,12 @@ elseif z_lib_name == "lua-zlib" then
     end
 end
 
-function Compress:new(options)
+function Compressor:new(options)
     self.options = options or {}
     return self
 end
 
-function Compress:processBodyData(data, stayOpen, request, response)
+function Compressor:processBodyData(data, stayOpen, request, response)
     local accept_encoding
 
     if response.headersSended then
@@ -126,4 +126,4 @@ function Compress:processBodyData(data, stayOpen, request, response)
     return data
 end
 
-return Compress
+return Compressor

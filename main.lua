@@ -7,14 +7,21 @@ local server = pegasus{
     port = 8888
 }
 
-router:get("/:lol", function(request, response, params)
-    response:addHeader("Content-Type", "text/plain")
+--router:any("*anything", function(params, method) -- TODO fix so that request and response are available here?
+router:any("/index", function(request, response, params)
     response:statusCode(200)
-    response:write(string.format("reached a REST endpoint with id %s", params.lol))
+    response:addHeader("Content-Type", "text/plain")
+    response:write("all right you are here " .. request:method() .. " " .. (params.anything or ""))
 end)
 
-server:start(function(request, response)
-    response:addHeader("Content-Type", "text/plain")
+router:get("/:point/*sub", function(request, response, params)
     response:statusCode(200)
+    response:addHeader("Content-Type", "text/plain")
+    response:write(string.format("reached a REST endpoint %s with subdomain %s", params.point, params.sub))
+end)
+
+server:run(function(request, response)
+    response:statusCode(200)
+    response:addHeader("Content-Type", "text/plain")
     response:write "Server is running..."
 end)

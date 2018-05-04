@@ -126,10 +126,11 @@ for _,method in ipairs(HTTP_METHODS) do
     end                                      -- end
 end
 
--- Extend http request methods (get, post, ...) by this wildcard method/function (:any(), :get(), :post(), ...)
-Router["any"] = function(self, path, f)      -- match any method
-    for _,method in ipairs(HTTP_METHODS) do
-        self:match(method:upper(), path, function(params) return f(params, method) end)
+-- Extend http request methods to match ANY of the HTTP_METHODS, e.g. both GET and POST
+Router["any"] = function(self, path, f)
+    for _, method in ipairs(HTTP_METHODS) do
+        --self:match(method:upper(), path, function(params) return f(params, method) end)
+        self:match(method:upper(), path, f)
     end
 end
 

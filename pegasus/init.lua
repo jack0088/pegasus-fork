@@ -1,6 +1,6 @@
 local socket = require "socket"
 local class = require("class").class
-local Handler = require "pegasus.handler"
+local Controller = require "pegasus.controller"
 
 local Pegasus = class()
 
@@ -14,8 +14,8 @@ function Pegasus:new(settings)
     return self
 end
 
-function Pegasus:start(callback)
-    local handler = Handler(callback, self.location, self.plugins)
+function Pegasus:run(callback)
+    local controller = Controller(callback, self.location, self.plugins)
     local server = assert(socket.bind(self.host, self.port))
     local ip, port = server:getsockname()
 
@@ -24,7 +24,7 @@ function Pegasus:start(callback)
     while true do
         local client = server:accept()
         client:settimeout(self.timeout, "b")
-        handler:processRequest(self.port, client)
+        controller:processRequest(self.port, client)
     end
 end
 
