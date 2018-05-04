@@ -1,6 +1,6 @@
 local pretty = require "pretty"
 local pegasus = require "pegasus"
-local router = require("pegasus.plugin.router"):new()
+local router = require("pegasus.plugin.router")()
 
 local server = pegasus{
     plugins = {router},
