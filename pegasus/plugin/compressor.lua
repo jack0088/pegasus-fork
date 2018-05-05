@@ -31,7 +31,6 @@ if z_lib_name == "lzlib" then
         level = level or ZlibStream.DEFAULT_COMPRESSION
         method = method or ZlibStream.DEFLATE
         self.zd = assert(zlib.deflate(writer, level, method, windowBits))
-        return self
     end
 
     function ZlibStream:write(chunk)
@@ -49,7 +48,6 @@ elseif z_lib_name == "lua-zlib" then
         assert(method == ZlibStream.DEFLATE, "lua-zlib support only deflated method")
         self.zd = assert(zlib.deflate(level, windowBits))
         self.writer = writer
-        return self
     end
 
     function ZlibStream:write(chunk)
@@ -65,7 +63,6 @@ end
 
 function Compressor:new(options)
     self.options = options or {}
-    return self
 end
 
 function Compressor:processBodyData(data, stayOpen, request, response)
