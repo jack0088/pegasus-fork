@@ -124,7 +124,7 @@ function Response:writeDefaultErrorMessage(statusCode)
 end
 
 function Response:close()
-    local body = self.writeHandler:processBodyData(nil, true, self)
+    local body = self.writeHandler:pluginProcessBodyData(nil, true, self)
     if body and #body > 0 then
         self.client:send(dec2hex(#body).."\r\n"..body.."\r\n")
     end
@@ -162,7 +162,7 @@ function Response:sendHeaders(stayOpen, body)
 end
 
 function Response:write(body, stayOpen)
-    body = self.writeHandler:processBodyData(body or "", stayOpen, self)
+    body = self.writeHandler:pluginProcessBodyData(body or "", stayOpen, self)
     self:sendHeaders(stayOpen, body)
 
     self.closed = not(stayOpen or false)
@@ -180,8 +180,8 @@ function Response:write(body, stayOpen)
     return self
 end
 
-function Response:writeFile(file, contentType)
-    self:contentType(contentType)
+function Response:writeFile(file, contentTypeValue)
+    self:contentType(contentTypeValue)
     self:statusCode(200)
     local value = file:read("*a")
     file:close()

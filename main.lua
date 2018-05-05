@@ -21,7 +21,5 @@ router:get("/:point/*sub", function(request, response, params)
 end)
 
 server:run(function(request, response)
-    response:statusCode(200)
-    response:addHeader("Content-Type", "text/plain")
-    response:write "Server is running..."
+    response:writeDefaultErrorMessage(404)
 end)

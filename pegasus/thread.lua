@@ -1,25 +1,23 @@
-local mimetypes = require "mimetypes"
 local lfs = require "lfs"
+local mimetype = require "mimetypes"
 local class = require("class").class
 local Request = require "pegasus.request"
 local Response = require "pegasus.response"
-
+local Thread = class()
 
 local function ternary(condition, t, f)
     if condition then return t else return f end
 end
 
-local Controller = class()
-
-function Controller:new(callback, location, plugins)
+function Thread:new(callback, location, plugins)
     self.callback = callback
     self.location = location or ""
     self.plugins = plugins or {}
-    self:pluginsAlterRequestResponseMetatable()
+    self:pluginAlterRequestResponseMetatable()
     return self
 end
 
-function Controller:pluginsAlterRequestResponseMetatable()
+function Thread:pluginAlterRequestResponseMetatable()
     for _, plugin in ipairs(self.plugins) do
         if plugin.alterRequestResponseMetaTable then
             local stop = plugin:alterRequestResponseMetaTable(Request, Response)
@@ -30,7 +28,7 @@ function Controller:pluginsAlterRequestResponseMetatable()
     end
 end
 
-function Controller:pluginsNewRequestResponse(request, response)
+function Thread:pluginNewRequestResponse(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.newRequestResponse then
             local stop = plugin:newRequestResponse(request, response)
@@ -41,7 +39,7 @@ function Controller:pluginsNewRequestResponse(request, response)
     end
 end
 
-function Controller:pluginsBeforeProcess(request, response)
+function Thread:pluginBeforeProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.beforeProcess then
             local stop = plugin:beforeProcess(request, response)
@@ -52,7 +50,7 @@ function Controller:pluginsBeforeProcess(request, response)
     end
 end
 
-function Controller:pluginsAfterProcess(request, response)
+function Thread:pluginAfterProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.afterProcess then
             local stop = plugin:afterProcess(request, response)
@@ -63,7 +61,7 @@ function Controller:pluginsAfterProcess(request, response)
     end
 end
 
-function Controller:pluginsProcessFile(request, response, filename)
+function Thread:pluginProcessFile(request, response, filename)
     for _, plugin in ipairs(self.plugins) do
         if plugin.processFile then
             local stop = plugin:processFile(request, response, filename)
@@ -74,21 +72,18 @@ function Controller:pluginsProcessFile(request, response, filename)
     end
 end
 
-function Controller:processBodyData(data, stayOpen, response)
+function Thread:pluginProcessBodyData(data, stayOpen, response)
     local localData = data
-
-    for _, plugin in ipairs(self.plugins or {}) do
+    for _, plugin in ipairs(self.plugins) do
         if plugin.processBodyData then
             localData = plugin:processBodyData(localData, stayOpen, response.request, response)
         end
     end
-
     return localData
 end
 
-function Controller:processRequest(port, client)
+function Thread:processRequestResponse(port, client)
     local request = Request(port, client)
-
     if not request:method() then
         client:close() -- do not respond to invalid requests, just close connection
         return
@@ -97,7 +92,7 @@ function Controller:processRequest(port, client)
     local response = Response(client, self)
     response.request = request
 
-    local stop = self:pluginsNewRequestResponse(request, response)
+    local stop = self:pluginNewRequestResponse(request, response)
     if stop then
         return
     end
@@ -110,16 +105,14 @@ function Controller:processRequest(port, client)
             response:statusCode(404)
         end
 
-        stop = self:pluginsProcessFile(request, response, filename)
-
+        stop = self:pluginProcessFile(request, response, filename)
         if stop then
             return
         end
 
         local file = io.open(filename, "rb")
-
         if file then
-            response:writeFile(file, mimetypes.guess(filename or "") or "text/html")
+            response:writeFile(file, mimetype.guess(filename or "") or "text/html")
         else
             response:statusCode(404)
         end
@@ -137,5 +130,4 @@ function Controller:processRequest(port, client)
     end
 end
 
-
-return Controller
+return Thread

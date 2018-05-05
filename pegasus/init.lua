@@ -1,12 +1,12 @@
 local socket = require "socket"
 local class = require("class").class
-local Controller = require "pegasus.controller"
+local Thread = require "pegasus.thread"
 
 local Pegasus = class()
 
 function Pegasus:new(settings)
     settings = settings or {}
-    self.host = settings.host or "*"
+    self.host = settings.host or "*" -- * binds any client ip
     self.port = settings.port or 8888
     self.location = settings.location or ""
     self.plugins = settings.plugins or {}
@@ -15,7 +15,7 @@ function Pegasus:new(settings)
 end
 
 function Pegasus:run(callback)
-    local controller = Controller(callback, self.location, self.plugins)
+    local thread = Thread(callback, self.location, self.plugins)
     local server = assert(socket.bind(self.host, self.port))
     local ip, port = server:getsockname()
 
@@ -24,7 +24,7 @@ function Pegasus:run(callback)
     while true do
         local client = server:accept()
         client:settimeout(self.timeout, "b")
-        controller:processRequest(self.port, client)
+        thread:processRequestResponse(self.port, client)
     end
 end
 
