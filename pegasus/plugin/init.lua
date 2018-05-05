@@ -1,6 +1,6 @@
 local lfs = require "lfs"
 local mimetype = require "mimetypes"
-local class = require("class").class
+local class = require("lib.class").class
 local Request = require "pegasus.request"
 local Response = require "pegasus.response"
 local Hook = class()

@@ -10,7 +10,7 @@ end
 local zlib = require "zlib"
 local z_lib_name = assert(check_zlib_name(zlib), "Unsupported zlib Lua binding")
 
-local class = require("class").class
+local class = require("lib.class").class
 local ZlibStream = class()
 local Compressor = class()
 

@@ -1,4 +1,4 @@
-local pretty = require "pretty"
+local pretty = require "lib.pretty"
 local pegasus = require "pegasus"
 local router = require("pegasus.plugin.router")()
 

@@ -68,7 +68,7 @@ local function dec2hex(dec)
     return out
 end
 
-local class = require("class").class
+local class = require("lib.class").class
 local Response = class()
 
 function Response:new(client, writeHandler)

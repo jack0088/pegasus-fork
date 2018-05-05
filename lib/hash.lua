@@ -135,7 +135,7 @@ elseif bit and bit.band then
 	lrotate = bit.rol
 else
 	-- Pure Lua bitwise functions part of https://bitbucket.org/Boolsheet/bslf
-	local bit_lua = require("bit")
+	local bit_lua = require("lib.bit")
 	local bit_lua_target = {0, 1}
 	if not bit_lua.version or bit_lua.version[1] ~= bit_lua_target[1] or bit_lua.version[2] ~= bit_lua_target[2] then
 		local required = not bit_lua.version and "a really old one" or table.concat(bit_lua.version, ".")

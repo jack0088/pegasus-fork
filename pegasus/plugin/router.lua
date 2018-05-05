@@ -78,7 +78,7 @@ local function merge_params(...)
     return result
 end
 
-local class = require("class").class
+local class = require("lib.class").class
 local Router = class()
 
 function Router:new()

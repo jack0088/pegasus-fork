@@ -1,4 +1,4 @@
-local class = require("class").class
+local class = require("lib.class").class
 local Request = class()
 
 Request.PATTERN_PATH = "(%S+)%s*"

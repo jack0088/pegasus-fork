@@ -1,4 +1,4 @@
-local class = require("class").class
+local class = require("lib.class").class
 local Subscriber = class()
 local Channel = class()
 local Mediator = class()

@@ -1,5 +1,5 @@
 local socket = require "socket"
-local class = require("class").class
+local class = require("lib.class").class
 local Hook = require "pegasus.plugin"
 
 local Pegasus = class()
