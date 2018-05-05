@@ -3,13 +3,13 @@ local mimetype = require "mimetypes"
 local class = require("class").class
 local Request = require "pegasus.request"
 local Response = require "pegasus.response"
-local Thread = class()
+local Hook = class()
 
 local function ternary(condition, t, f)
     if condition then return t else return f end
 end
 
-function Thread:new(callback, location, plugins)
+function Hook:new(callback, location, plugins)
     self.callback = callback
     self.location = location or ""
     self.plugins = plugins or {}
@@ -17,7 +17,7 @@ function Thread:new(callback, location, plugins)
     return self
 end
 
-function Thread:pluginAlterRequestResponseMetatable()
+function Hook:pluginAlterRequestResponseMetatable()
     for _, plugin in ipairs(self.plugins) do
         if plugin.alterRequestResponseMetaTable then
             local stop = plugin:alterRequestResponseMetaTable(Request, Response)
@@ -28,7 +28,7 @@ function Thread:pluginAlterRequestResponseMetatable()
     end
 end
 
-function Thread:pluginNewRequestResponse(request, response)
+function Hook:pluginNewRequestResponse(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.newRequestResponse then
             local stop = plugin:newRequestResponse(request, response)
@@ -39,7 +39,7 @@ function Thread:pluginNewRequestResponse(request, response)
     end
 end
 
-function Thread:pluginBeforeProcess(request, response)
+function Hook:pluginBeforeProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.beforeProcess then
             local stop = plugin:beforeProcess(request, response)
@@ -50,7 +50,7 @@ function Thread:pluginBeforeProcess(request, response)
     end
 end
 
-function Thread:pluginAfterProcess(request, response)
+function Hook:pluginAfterProcess(request, response)
     for _, plugin in ipairs(self.plugins) do
         if plugin.afterProcess then
             local stop = plugin:afterProcess(request, response)
@@ -61,7 +61,7 @@ function Thread:pluginAfterProcess(request, response)
     end
 end
 
-function Thread:pluginProcessFile(request, response, filename)
+function Hook:pluginProcessFile(request, response, filename)
     for _, plugin in ipairs(self.plugins) do
         if plugin.processFile then
             local stop = plugin:processFile(request, response, filename)
@@ -72,7 +72,7 @@ function Thread:pluginProcessFile(request, response, filename)
     end
 end
 
-function Thread:pluginProcessBodyData(data, stayOpen, response)
+function Hook:pluginProcessBodyData(data, stayOpen, response)
     local localData = data
     for _, plugin in ipairs(self.plugins) do
         if plugin.processBodyData then
@@ -82,7 +82,7 @@ function Thread:pluginProcessBodyData(data, stayOpen, response)
     return localData
 end
 
-function Thread:processRequestResponse(port, client)
+function Hook:processRequestResponse(port, client)
     local request = Request(port, client)
     if not request:method() then
         client:close() -- do not respond to invalid requests, just close connection
@@ -98,7 +98,7 @@ function Thread:processRequestResponse(port, client)
     end
 
     if request:path() and self.location ~= "" then
-        local path = ternary(request:path() == "/" or request:path() == "", "index.html", request:path())
+        local path = ternary(request:path() == "" or request:path() == "/", "index.html", request:path())
         local filename = "." .. self.location .. path
 
         if not lfs.attributes(filename) then
@@ -130,4 +130,4 @@ function Thread:processRequestResponse(port, client)
     end
 end
 
-return Thread
+return Hook
