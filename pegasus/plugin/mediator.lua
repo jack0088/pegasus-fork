@@ -13,8 +13,8 @@ end
 function Subscriber:new(fn, options)
     self.options = options or {}
     self.fn = fn
-    self.channel = nil
-    self.id = uuid(sub)
+    self.channels = nil
+    self.id = uuid(self)
 end
 
 function Subscriber:update(options)
@@ -80,17 +80,17 @@ function Channel:setPriority(id, priority)
     end
 end
 
-function Channel:addChannel(namespace)
+function Channel:addTopic(namespace)
     self.topics[namespace] = Channel(namespace, self)
     return self.topics[namespace]
 end
 
-function Channel:hasChannel(namespace)
-    return namespace and self.topics[namespace] and true
+function Channel:hasTopic(namespace)
+    return self.topics[namespace] and true or false
 end
 
-function Channel:getChannel(namespace)
-    return self.topics[namespace] or self:addChannel(namespace)
+function Channel:getTopic(namespace)
+    return self.topics[namespace] or self:addTopic(namespace)
 end
 
 function Channel:removeSubscriber(id)
@@ -107,7 +107,7 @@ function Channel:publish(result, ...)
     for i = 1, #self.callbacks do
         local callback = self.callbacks[i]
 
-        if not callback.options.predicate or callback.options.predicate(...) then -- if it doesn"t have a predicate, or it does and it"s true then run it
+        if not callback.options.predicate or callback.options.predicate(...) then -- if it does not have a predicate, or it does and it returns `true` then run it
             local value, continue = callback.fn(...) -- just take the first result and insert it into the result table
             if value then table.insert(result, value) end
             if not continue then return result end
@@ -128,28 +128,28 @@ function Mediator:new(fn, options)
     self.channel = Channel("root")
 end
 
-function Mediator:getChannel(channelNamespace)
+function Mediator:getTopic(channelNamespace)
     local channel = self.channel
     for i = 1, #channelNamespace do
-        channel = channel:getChannel(channelNamespace[i])
+        channel = channel:getTopic(channelNamespace[i])
     end
     return channel
 end
 
 function Mediator:subscribe(channelNamespace, fn, options)
-    return self:getChannel(channelNamespace):addSubscriber(fn, options)
+    return self:getTopic(channelNamespace):addSubscriber(fn, options)
 end
 
 function Mediator:getSubscriber(id, channelNamespace)
-    return self:getChannel(channelNamespace):getSubscriber(id)
+    return self:getTopic(channelNamespace):getSubscriber(id)
 end
 
 function Mediator:unsubscribe(id, channelNamespace)
-    return self:getChannel(channelNamespace):removeSubscriber(id)
+    return self:getTopic(channelNamespace):removeSubscriber(id)
 end
 
 function Mediator:publish(channelNamespace, ...)
-    return self:getChannel(channelNamespace):publish({}, ...)
+    return self:getTopic(channelNamespace):publish({}, ...)
 end
 
 return Mediator

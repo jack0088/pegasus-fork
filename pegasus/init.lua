@@ -1,6 +1,6 @@
 local socket = require "socket"
 local class = require("class").class
-local Thread = require "pegasus.thread"
+local Thread = require "pegasus.plugin"
 
 local Pegasus = class()
 
