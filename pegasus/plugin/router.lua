@@ -92,19 +92,14 @@ function Router:resolve(method, url, ...)
     return resolve(url, node, merge_params(...))
 end
 
--- Override router class method to work with Pegasus request/response objects
-function Router:execute(request, response)
+-- Overwrite Pegasus plugin method to use request/response with handler
+function Router:newRequestResponse(request, response)
     local url = request:path()
     local method, err = request:method()
     local handler, params = self:resolve(method, url)
     if not method then return nil, err end
     if not handler then return false end
     return true, handler(request, response, params)
-end
-
--- Overwrite Pegasus plugin method to use request/response with handler
-function Router:newRequestResponse(request, response)
-    return self:execute(request, response)
 end
 
 function Router:match(method, url, callback)
