@@ -181,8 +181,9 @@ function Response:write(body, stayOpen)
 end
 
 function Response:writeFile(file, contentTypeValue)
-    self:contentType(contentTypeValue)
+    self:contentType(contentTypeValue or "text/html")
     self:statusCode(200)
+    file = type(file) == "string" and io.open(file, "rb") or file
     local value = file:read("*a")
     file:close()
     self:write(value)
