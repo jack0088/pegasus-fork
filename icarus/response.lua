@@ -72,15 +72,15 @@ local class = require("lib.class").class
 local Response = class()
 
 function Response:new(client, write_handler)
+    self.client = client
+    self.connection_closed = false
+    self.write_handler = write_handler
+    self.status = 200
+    self.filename = ""
     self.first_line_template = "HTTP/1.1 {{STATUS_CODE}} {{STATUS_TEXT}}\r\n"
     self.headers_first_line = ""
     self.headers = {}
     self.headers_sent = false
-    self.filename = ""
-    self.status = 200
-    self.client = client
-    self.connection_closed = false
-    self.write_handler = write_handler
     return self
 end
 

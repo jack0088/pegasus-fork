@@ -1,3 +1,6 @@
+-- Icarus is a fork of Pegasus from https://github.com/EvandroLG/pegasus.lua
+-- 2018 (c) kontakt@herrsch.de
+
 local socket = require "socket"
 local class = require("lib.class").class
 local Hook = require "pegasus.plugin"
