@@ -148,10 +148,9 @@ end
 
 function Response:forward(path) -- NOTE this call must appear before any :write() otherwise it will be ignored
     self:statusCode(302)
-    self.headers = {}
+    -- self.headers = {} -- reset all headers
     self:addHeader("Location", path)
     self:sendOnlyHeaders()
-    self.client:close()
     return self
 end
 
@@ -185,14 +184,13 @@ function Response:writeFile(filename, contentType)
     else
         response:statusCode(404)
     end
-    self.client:close()
     return self
 end
 
 function Response:writeDefaultErrorMessage(statusCode)
     self:statusCode(statusCode)
     local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{STATUS_CODE}}", statusCode)
-    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[statusCode]), false)
+    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[statusCode]))
     return self
 end
 
