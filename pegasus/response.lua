@@ -85,6 +85,18 @@ function Response:new(client, writeHandler)
     return self
 end
 
+function Response:statusCode(statusCode, statusText)
+    self.status = statusCode
+    self.headFirstLine = string.gsub(self.templateFirstLine, "{{STATUS_CODE}}", statusCode)
+    self.headFirstLine = string.gsub(self.headFirstLine, "{{STATUS_TEXT}}", statusText or STATUS_TEXT[statusCode])
+    return self
+end
+
+function Response:contentType(value)
+    self.headers["Content-Type"] = value
+    return self
+end
+
 function Response:addHeader(key, value)
     self.headers[key] = value
     return self
@@ -97,45 +109,12 @@ function Response:addHeaders(params)
     return self
 end
 
-function Response:contentType(value)
-    self.headers["Content-Type"] = value
-    return self
-end
-
-function Response:statusCode(statusCode, statusText)
-    self.status = statusCode
-    self.headFirstLine = string.gsub(self.templateFirstLine, "{{STATUS_CODE}}", statusCode)
-    self.headFirstLine = string.gsub(self.headFirstLine, "{{STATUS_TEXT}}", statusText or STATUS_TEXT[statusCode])
-    return self
-end
-
 function Response:_getHeaders()
     local headers = ""
     for key, value in pairs(self.headers) do
         headers = headers .. key .. ": " .. value .. "\r\n"
     end
     return headers
-end
-
-function Response:writeDefaultErrorMessage(statusCode)
-    self:statusCode(statusCode)
-    local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{STATUS_CODE}}", statusCode)
-    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[statusCode]), false)
-    return self
-end
-
-function Response:close()
-    local body = self.writeHandler:pluginProcessBodyData(nil, true, self)
-    if body and #body > 0 then
-        self.client:send(dec2hex(#body).."\r\n"..body.."\r\n")
-    end
-    self.client:send("0\r\n\r\n")
-    self.close = true
-end
-
-function Response:sendOnlyHeaders()
-    self:sendHeaders(false, "")
-    self:write("\r\n")
 end
 
 function Response:sendHeaders(stayOpen, body)
@@ -162,11 +141,25 @@ function Response:sendHeaders(stayOpen, body)
     return self
 end
 
+function Response:sendOnlyHeaders()
+    self:sendHeaders(false, "")
+    self:write("\r\n")
+end
+
+function Response:forward(path) -- NOTE this call must appear before any :write() otherwise it will be ignored
+    self:statusCode(302)
+    self.headers = {}
+    self:addHeader("Location", path)
+    self:sendOnlyHeaders()
+    self.client:close()
+    return self
+end
+
 function Response:write(body, stayOpen)
     body = self.writeHandler:pluginProcessBodyData(body or "", stayOpen, self)
     self:sendHeaders(stayOpen, body)
 
-    self.closed = not(stayOpen or false)
+    self.closed = not stayOpen
 
     if self.closed then
         self.client:send(body)
@@ -192,7 +185,24 @@ function Response:writeFile(filename, contentType)
     else
         response:statusCode(404)
     end
+    self.client:close()
     return self
+end
+
+function Response:writeDefaultErrorMessage(statusCode)
+    self:statusCode(statusCode)
+    local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{STATUS_CODE}}", statusCode)
+    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[statusCode]), false)
+    return self
+end
+
+function Response:close()
+    local body = self.writeHandler:pluginProcessBodyData(nil, true, self)
+    if body and #body > 0 then
+        self.client:send(dec2hex(#body).."\r\n"..body.."\r\n")
+    end
+    self.client:send("0\r\n\r\n")
+    self.close = true
 end
 
 return Response
