@@ -14,7 +14,7 @@ local server = pegasus{
 
 server:run(function(request, response)
     -- response:writeFile("template/404.html")
-    response:writeDefaultErrorMessage(404)
+    -- response:writeDefaultErrorMessage(404)
 end)
 
 -- TODO figure out how redirecting will work
