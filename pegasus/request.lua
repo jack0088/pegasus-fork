@@ -71,25 +71,25 @@ function Request:parseURLEncoded(value, _table) -- luacheck: ignore self
     return _table
 end
 
+function Request:path()
+    self:parseFirstLine()
+    return self._path
+end
+
 function Request:params()
     self:parseFirstLine()
     return self:parseURLEncoded(self._query_string, self._params)
+end
+
+function Request:method()
+    self:parseFirstLine()
+    return self._method
 end
 
 function Request:post()
     if self:method() ~= "POST" then return end
     local data = self:receiveBody()
     return self:parseURLEncoded(data, {})
-end
-
-function Request:path()
-    self:parseFirstLine()
-    return self._path
-end
-
-function Request:method()
-    self:parseFirstLine()
-    return self._method
 end
 
 function Request:headers()
