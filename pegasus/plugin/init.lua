@@ -1,5 +1,4 @@
 local lfs = require "lfs"
-local mimetype = require "mimetypes"
 local class = require("lib.class").class
 local Request = require "pegasus.request"
 local Response = require "pegasus.response"
@@ -97,31 +96,9 @@ function Hook:processRequestResponse(port, client)
         return
     end
 
-    if request:path() and self.location ~= "" then
-        local path = ternary(request:path() == "" or request:path() == "/", "index.html", request:path())
-        local filename = "." .. self.location .. path
-
-        if not lfs.attributes(filename) then
-            response:statusCode(404)
-        end
-
-        stop = self:pluginProcessFile(request, response, filename)
-        if stop then
-            return
-        end
-
-        local file = io.open(filename, "rb")
-        if file then
-            response:writeFile(file, mimetype.guess(filename or "") or "text/html")
-        else
-            response:statusCode(404)
-        end
-    end
-
     if self.callback then
         -- response:statusCode(200)
-        -- response.headers = {}
-        -- response:addHeader("Content-Type", "text/html")
+        -- response.headers = {["Content-Type"] = "text/html"} -- clear and :addHeader
         self.callback(request, response)
     end
 

@@ -4,6 +4,7 @@ local router = require "endpoint" -- RESTful api
 
 local server = pegasus{
     plugins = {router},
+    location = "~/.code/ru/",
     port = 8888
 }
 

@@ -42,7 +42,7 @@ function Request:parseFirstLine()
     local method, path, protocol = string.match(self.firstLine, Request.PATTERN_REQUEST) -- luacheck: ignore protocol
 
     if not method then
-        --self.client:close() -- close client socket immediately!
+        --self.client:close() -- close client socket immediately
         return
     end
 

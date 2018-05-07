@@ -50,8 +50,8 @@ local DEFAULT_ERROR_MESSAGE = [[
     </head>
     <body>
         <h1>Error response</h1>
-        <p>Error code: {{ STATUS_CODE }}</p>
-        <p>Message: {{ STATUS_TEXT }}</p>
+        <p>Error code: {{STATUS_CODE}}</p>
+        <p>Message: {{STATUS_TEXT}}</p>
     </body>
     </html>
 ]]
@@ -68,12 +68,13 @@ local function dec2hex(dec)
     return out
 end
 
+local mimetype = require "mimetypes"
 local class = require("lib.class").class
 local Response = class()
 
 function Response:new(client, writeHandler)
     self.headersSended = false
-    self.templateFirstLine = "HTTP/1.1 {{ STATUS_CODE }} {{ STATUS_TEXT }}\r\n"
+    self.templateFirstLine = "HTTP/1.1 {{STATUS_CODE}} {{STATUS_TEXT}}\r\n"
     self.headFirstLine = ""
     self.headers = {}
     self.status = 200
@@ -103,8 +104,8 @@ end
 
 function Response:statusCode(statusCode, statusText)
     self.status = statusCode
-    self.headFirstLine = string.gsub(self.templateFirstLine, "{{ STATUS_CODE }}", statusCode)
-    self.headFirstLine = string.gsub(self.headFirstLine, "{{ STATUS_TEXT }}", statusText or STATUS_TEXT[statusCode])
+    self.headFirstLine = string.gsub(self.templateFirstLine, "{{STATUS_CODE}}", statusCode)
+    self.headFirstLine = string.gsub(self.headFirstLine, "{{STATUS_TEXT}}", statusText or STATUS_TEXT[statusCode])
     return self
 end
 
@@ -118,8 +119,8 @@ end
 
 function Response:writeDefaultErrorMessage(statusCode)
     self:statusCode(statusCode)
-    local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{ STATUS_CODE }}", statusCode)
-    self:write(string.gsub(content, "{{ STATUS_TEXT }}", STATUS_TEXT[statusCode]), false)
+    local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{STATUS_CODE}}", statusCode)
+    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[statusCode]), false)
     return self
 end
 
@@ -180,13 +181,17 @@ function Response:write(body, stayOpen)
     return self
 end
 
-function Response:writeFile(file, contentTypeValue)
-    self:contentType(contentTypeValue or "text/html")
-    self:statusCode(200)
-    file = type(file) == "string" and io.open(file, "rb") or file
-    local value = file:read("*a")
-    file:close()
-    self:write(value)
+function Response:writeFile(filename, contentType)
+    local file = type(filename) == "string" and io.open(filename, "rb") or filename
+    if file then
+        local content = file:read("*a")
+        file:close()
+        self:contentType(contentType or mimetype.guess(filename or "") or "text/html")
+        self:statusCode(200)
+        self:write(content)
+    else
+        response:statusCode(404)
+    end
     return self
 end
 
