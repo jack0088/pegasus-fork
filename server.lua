@@ -1,11 +1,15 @@
 local pretty = require "lib.pretty"
 local pegasus = require "pegasus"
+local cache = require "pegasus.plugin.cache"
 local router = require "endpoint" -- RESTful api
 
 local server = pegasus{
-    plugins = {router},
+    port = 8888,
     location = "~/.code/ru/",
-    port = 8888
+    plugins = {
+        cache,
+        router
+    }
 }
 
 server:run(function(request, response)
