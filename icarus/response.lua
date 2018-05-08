@@ -80,6 +80,8 @@ function Response:new(client, write_handler)
     self.headers = {}
     self.headers_first_line = ""
     self.headers_sent = false
+    self.response = nil
+    self:statusCode(200)
     return self
 end
 
@@ -153,13 +155,9 @@ function Response:sendHeadersOnly()
 end
 
 function Response:forward(path)
-    if not self.connection_closed then
-        self:statusCode(302)
-        self.headers_sent = false -- force to send all headers again
-        self.headers = {} -- reset all headers
-        self:addHeader("Location", path) -- redirect to url
-        self:sendHeadersOnly()
-    end
+    self:statusCode(302)
+    self:addHeader("Location", path)
+    self:sendHeadersOnly()
 end
 
 function Response:write(body, keep_connected)
@@ -183,7 +181,7 @@ function Response:write(body, keep_connected)
 end
 
 function Response:writeFile(file_name, content_type_value)
-    -- TODO convert self.location
+    -- TODO convert self.location before reading image with path?
     local file = type(file_name) == "string" and io.open(file_name, "rb") or file_name
     if file then
         local content = file:read("*a")
