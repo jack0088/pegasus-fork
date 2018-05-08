@@ -16,6 +16,8 @@ route:get("/subscribe/:topic", function(request, response, params)
         response:addHeader("Bar", "BarHeaderAdded-FOOBAR")
         response:forward("/")
     end
+
+    -- TODO copy headers on response.forward?!
 end)
 
 return route
