@@ -12,10 +12,7 @@ local server = icarus{
     }
 }
 
-server:run(function(request, response)
-    -- response:writeFile("template/404.html")
-    -- response:writeDefaultErrorMessage(404)
-end)
+server:run()
 
 -- TODO figure out how redirecting will work
 -- TODO make broadcaster work to broadcast updates/stream data to client without having the client to pull

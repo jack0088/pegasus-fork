@@ -38,7 +38,7 @@ local STATUS_TEXT = {
     [502] = "Bad Gateway",
     [503] = "Service Unavailable",
     [504] = "Gateway Time-out",
-    [505] = "HTTP Version not supported",
+    [505] = "HTTP Version not supported"
 }
 
 local DEFAULT_ERROR_MESSAGE = [[
@@ -50,18 +50,18 @@ local DEFAULT_ERROR_MESSAGE = [[
     </head>
     <body>
         <h1>Response Error</h1>
-        <p>Error Code: {{STATUS_CODE}}</p>
-        <p>Error Message: {{STATUS_TEXT}}</p>
+        <p>Error Code: %s</p>
+        <p>Error Message: %s</p>
     </body>
     </html>
 ]]
 
-local function dec2hex(dec)
+local function hexadecimal(decimal)
     local b, k, out, i, d = 16, "0123456789ABCDEF", "", 0
-    while dec > 0 do
+    while decimal > 0 do
         i = i + 1
-        local m = dec - math.floor(dec / b) * b
-        dec, d = math.floor(dec / b), m + 1
+        local m = decimal - math.floor(decimal / b) * b
+        decimal, d = math.floor(decimal / b), m + 1
         out = string.sub(k, d, d) .. out
     end
     return out
@@ -74,19 +74,19 @@ local Response = class()
 function Response:new(client, write_handler)
     self.client = client
     self.connection_closed = false
-    self.write_handler = write_handler
+    self.hook = write_handler
     self.status = 200
     self.filename = ""
-    self.headers_first_line = ""
     self.headers = {}
+    self.headers_first_line = ""
     self.headers_sent = false
     return self
 end
 
 function Response:close()
-    local body = self.write_handler:pluginProcessBodyData(nil, true, self)
+    local body = self.hook:pluginProcessBodyData(nil, true, self)
     if body and #body > 0 then
-        self.client:send(dec2hex(#body) .. "\r\n" .. body .. "\r\n")
+        self.client:send(hexadecimal(#body) .. "\r\n" .. body .. "\r\n")
     end
     self.client:send("0\r\n\r\n")
     self.close = true
@@ -123,12 +123,12 @@ function Response:getHeaders()
     return headers
 end
 
-function Response:sendHeaders(body, keep_client_connected)
+function Response:sendHeaders(body, keep_connected)
     if self.headers_sent then
         return self
     end
 
-    if keep_client_connected then
+    if keep_connected then
         self:addHeader("Transfer-Encoding", "chunked")
     elseif type(body) == "string" then
         self:addHeader("Content-Length", body:len())
@@ -152,25 +152,27 @@ function Response:sendHeadersOnly()
     self:write("\r\n")
 end
 
-function Response:forward(path) -- NOTE this call must appear before any :write() otherwise it will be ignored
-    self:statusCode(302)
-    self.headers_sent = false -- force send headers again
-    self.headers = {} -- reset all headers
-    self:addHeader("Location", path) -- redirect to url
-    self:sendHeadersOnly()
+function Response:forward(path)
+    if not self.connection_closed then
+        self:statusCode(302)
+        self.headers_sent = false -- force to send all headers again
+        self.headers = {} -- reset all headers
+        self:addHeader("Location", path) -- redirect to url
+        self:sendHeadersOnly()
+    end
 end
 
-function Response:write(body, keep_client_connected)
-    body = self.write_handler:pluginProcessBodyData(body or "", keep_client_connected, self)
+function Response:write(body, keep_connected)
+    body = self.hook:pluginProcessBodyData(body or "", keep_connected, self)
 
-    self:sendHeaders(body, keep_client_connected)
+    self:sendHeaders(body, keep_connected)
 
-    self.connection_closed = not keep_client_connected
+    self.connection_closed = not keep_connected
 
     if self.connection_closed then
         self.client:send(body) -- send chunk
     elseif #body > 0 then
-        self.client:send(dec2hex(#body) .. "\r\n" .. body .. "\r\n") -- do not send chunk with zero length because full chunk might be unconstructable with current set of data
+        self.client:send(hexadecimal(#body) .. "\r\n" .. body .. "\r\n") -- do not send chunk with zero length because full chunk might be unconstructable with current set of data
     end
 
     if self.connection_closed then
@@ -181,6 +183,7 @@ function Response:write(body, keep_client_connected)
 end
 
 function Response:writeFile(file_name, content_type_value)
+    -- TODO convert self.location
     local file = type(file_name) == "string" and io.open(file_name, "rb") or file_name
     if file then
         local content = file:read("*a")
@@ -195,9 +198,8 @@ function Response:writeFile(file_name, content_type_value)
 end
 
 function Response:writeDefaultErrorMessage(status_code)
-    self:statusCode(status_code)
-    local content = string.gsub(DEFAULT_ERROR_MESSAGE, "{{STATUS_CODE}}", self.status)
-    self:write(string.gsub(content, "{{STATUS_TEXT}}", STATUS_TEXT[self.status]))
+    self:statusCode(status_code or 404)
+    self:write(string.format(DEFAULT_ERROR_MESSAGE, self.status, STATUS_TEXT[self.status]))
     return self
 end
 

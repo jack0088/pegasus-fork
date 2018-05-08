@@ -1,23 +1,23 @@
 local class = require("lib.class").class
 local Request = class()
 
-Request.PATTERN_PATH = "(%S+)%s*"
 Request.PATTERN_METHOD = "^(.-)%s"
+Request.PATTERN_PATH = "(%S+)%s*"
 Request.PATTERN_PROTOCOL = "(HTTP%/%d%.%d)"
+Request.PATTERN_REQUEST = (Request.PATTERN_METHOD .. Request.PATTERN_PATH ..Request.PATTERN_PROTOCOL)
 Request.PATTERN_HEADER = "([%w-]+): ([%w %p]+=?)"
 Request.PATTERN_QUERY_STRING = "([^=]*)=([^&]*)&?"
-Request.PATTERN_REQUEST = (Request.PATTERN_METHOD .. Request.PATTERN_PATH ..Request.PATTERN_PROTOCOL)
 
 function Request:new(port, client)
     self.client = client
     self.port = port
     self.ip = client:getpeername()
-    self.firstLine = nil
+    self.headers_first_line = nil
+    self._headers = {}
+    self._headers_parsed = false
     self._method = nil
     self._path = nil
     self._params = {}
-    self._headers_parsed = false
-    self._headers = {}
     self._form = {}
     self._is_valid = false
     self._body = ""
@@ -25,24 +25,28 @@ function Request:new(port, client)
     return self
 end
 
-function Request:parseFirstLine()
-    if self.firstLine then
+function Request:parseHeadersFirstLine()
+    if self.headers_first_line then
         return
     end
 
     local status, partial
-    self.firstLine, status, partial = self.client:receive()
+    self.headers_first_line, status, partial = self.client:receive()
 
-    if not self.firstLine or status == "timeout" or partial == "" or status == "closed" then
+    if not self.headers_first_line
+    or status == "closed"
+    or status == "timeout"
+    or partial == ""
+    then
         return
     end
 
     -- Parse firstline http: METHOD PATH PROTOCOL,
     -- GET Makefile HTTP/1.1
-    local method, path, protocol = string.match(self.firstLine, Request.PATTERN_REQUEST) -- luacheck: ignore protocol
+    local method, path, protocol = string.match(self.headers_first_line, Request.PATTERN_REQUEST) -- luacheck: ignore protocol
 
     if not method then
-        --self.client:close() -- close client socket immediately
+        self.client:close() -- close client socket immediately
         return
     end
 
@@ -72,17 +76,17 @@ function Request:parseURLEncoded(value, _table) -- luacheck: ignore self
 end
 
 function Request:path()
-    self:parseFirstLine()
+    self:parseHeadersFirstLine()
     return self._path
 end
 
 function Request:params()
-    self:parseFirstLine()
+    self:parseHeadersFirstLine()
     return self:parseURLEncoded(self._query_string, self._params)
 end
 
 function Request:method()
-    self:parseFirstLine()
+    self:parseHeadersFirstLine()
     return self._method
 end
 
@@ -97,7 +101,7 @@ function Request:headers()
         return self._headers
     end
 
-    self:parseFirstLine()
+    self:parseHeadersFirstLine()
 
     local data repeat
         data = self.client:receive()

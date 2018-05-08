@@ -4,9 +4,11 @@ local Request = require "icarus.request"
 local Response = require "icarus.response"
 local Hook = class()
 
-local function ternary(condition, t, f)
-    if condition then return t else return f end
-end
+-- local function ternary(condition, t, f)
+--     if condition then return t else return f end
+-- end
+-- local path = ternary(request:path() == '/' or request:path() == '', 'index.html', request:path())
+-- local filename = '.' .. self.location .. path
 
 function Hook:new(callback, location, plugins)
     self.callback = callback
@@ -71,11 +73,11 @@ function Hook:pluginProcessFile(request, response, filename)
     end
 end
 
-function Hook:pluginProcessBodyData(data, stayOpen, response)
+function Hook:pluginProcessBodyData(data, keep_connected, response)
     local localData = data
     for _, plugin in ipairs(self.plugins) do
         if plugin.processBodyData then
-            localData = plugin:processBodyData(localData, stayOpen, response.request, response)
+            localData = plugin:processBodyData(localData, keep_connected, response.request, response)
         end
     end
     return localData
@@ -97,9 +99,9 @@ function Hook:processRequestResponse(port, client)
     end
 
     if self.callback then
-        -- response:statusCode(200)
-        -- response.headers = {["Content-Type"] = "text/html"} -- clear and :addHeader
         self.callback(request, response)
+    else
+        response:statusCode(404)
     end
 
     if response.status == 404 then
