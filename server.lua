@@ -1,9 +1,9 @@
 local pretty = require "lib.pretty"
-local pegasus = require "pegasus"
-local cache = require "pegasus.plugin.cache"
-local router = require "endpoint" -- RESTful api
+local icarus = require "icarus"
+local cache = require "icarus.plugin.cache"
+local router = require "rest-api" -- RESTful api
 
-local server = pegasus{
+local server = icarus{
     port = 8888,
     location = "~/.code/ru/",
     plugins = {

@@ -1,4 +1,4 @@
-local route = require("pegasus.plugin.router")()
+local route = require("icarus.plugin.router")()
 
 route:get("/subscribe/:topic", function(request, response, params)
     response:statusCode(200)

@@ -3,7 +3,7 @@
 
 local socket = require "socket"
 local class = require("lib.class").class
-local Hook = require "pegasus.plugin"
+local Hook = require "icarus.plugin"
 
 local Pegasus = class()
 

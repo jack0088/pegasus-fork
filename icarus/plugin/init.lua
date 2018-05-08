@@ -1,7 +1,7 @@
 local lfs = require "lfs"
 local class = require("lib.class").class
-local Request = require "pegasus.request"
-local Response = require "pegasus.response"
+local Request = require "icarus.request"
+local Response = require "icarus.response"
 local Hook = class()
 
 local function ternary(condition, t, f)

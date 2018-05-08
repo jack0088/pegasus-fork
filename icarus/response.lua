@@ -46,12 +46,12 @@ local DEFAULT_ERROR_MESSAGE = [[
     <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-        <title>Error response</title>
+        <title>Response Error</title>
     </head>
     <body>
-        <h1>Error response</h1>
-        <p>Error code: {{STATUS_CODE}}</p>
-        <p>Message: {{STATUS_TEXT}}</p>
+        <h1>Response Error</h1>
+        <p>Error Code: {{STATUS_CODE}}</p>
+        <p>Error Message: {{STATUS_TEXT}}</p>
     </body>
     </html>
 ]]
@@ -77,7 +77,6 @@ function Response:new(client, write_handler)
     self.write_handler = write_handler
     self.status = 200
     self.filename = ""
-    self.first_line_template = "HTTP/1.1 {{STATUS_CODE}} {{STATUS_TEXT}}\r\n"
     self.headers_first_line = ""
     self.headers = {}
     self.headers_sent = false
@@ -95,8 +94,7 @@ end
 
 function Response:statusCode(status_code, status_text)
     self.status = status_code
-    self.headers_first_line = string.gsub(self.first_line_template, "{{STATUS_CODE}}", self.status)
-    self.headers_first_line = string.gsub(self.headers_first_line, "{{STATUS_TEXT}}", status_text or STATUS_TEXT[self.status])
+    self.headers_first_line = string.format("HTTP/1.1 %s %s\r\n", self.status, status_text or STATUS_TEXT[self.status])
     return self
 end
 
