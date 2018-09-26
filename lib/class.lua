@@ -17,6 +17,7 @@
     2018 (c) kontakt@herrsch.de
 --]]
 
+
 if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua version
     local _pairs = pairs
     function pairs(array)
@@ -25,12 +26,37 @@ if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua version
     end
 end
 
-local wrapper = {__call = table.unpack or unpack}
-local function wrap(value, typeof) return setmetatable({value, tostring(typeof)}, wrapper) end
-local function unwrap(value, typeof) if type(value) == "table" and getmetatable(value) == wrapper then return unwrap(value()) end return value, typeof end -- recursive
 
-local function get(method) return wrap(method, "get") end
-local function set(method) return wrap(method, "set") end
+local unpack = table.unpack or unpack -- Lua 5.1 shim
+local wrapper = {__call = unpack}
+
+local function wrap(value, typeof)
+    return setmetatable({value, tostring(typeof)}, wrapper)
+end
+
+local function unwrap(value, typeof) -- recursive
+    if type(value) == "table" and getmetatable(value) == wrapper then
+        return unwrap(value())
+    end
+    return value, typeof
+end
+
+
+local function handler(func, ...)
+    local params = {...}
+    local closure = function() func(unpack(params)) end
+    local is_parameterized = (#params > 0 and type(func) == "function")
+    return is_parameterized and closure or func
+end
+
+local function get(func, ...)
+    return wrap(handler(func, ...), "get")
+end
+
+local function set(func, ...)
+    return wrap(handler(func, ...), "set")
+end
+
 
 local function class(base)
     local proxy = {}
@@ -74,7 +100,7 @@ local function class(base)
 
     function convert(value)
         if type(value) == "table" and not getmetatable(value) then
-            return instantiate(value) -- convert table value into class instance value
+            return instantiate(value) -- convert table value into class instance value; class() values remain untouched!
         end
         return value
     end
@@ -111,8 +137,9 @@ local function class(base)
     return setmetatable(proxy, {__index = peek, __newindex = poke, __pairs = traverse, __call = instantiate})
 end
 
+
 --[[
-    NOTE that Lua 5.1.3 `require()` is implemented in static int ll_require (lua_State *L) in loadlib.c file.
+    NOTE that Lua 5.1 `require()` is implemented in `static int ll_require (lua_State *L)` in `loadlib.c` file.
     This function always returns 1 as number of returned values on stack.
     Means that functions can return multiple values, but files can not!
 --]]

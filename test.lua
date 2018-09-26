@@ -10,15 +10,18 @@ function mensch:new()
     print("init mensch")
 end
 mensch.foo = get(function() return nomnom end)
-mensch.foo = set(function() error("this is a private get-only property") end)
-mensch.foobar = "foobar"
+-- mensch.foo = get(print, "write only prop")
+mensch.foo = set(error, "this is a private get-only property")
+-- mensch.foo = set(function() error("PRIVAAAasate") end)
+-- mensch.foobar = "foobar"
+mensch.foo = "_"
 
 -- local peter = mensch()
 -- local peter = class(mensch)()
-local peter = class(mensch)
-peter.foo = "_"
+-- local peter = class(mensch)
+-- -- peter.foo = "_"
 
-mensch.bla = true
+-- mensch.bla = true
 
-local bimbo = class(peter)
-print(bimbo.bla)
+-- local bimbo = class(peter)
+-- print(bimbo.bla)
