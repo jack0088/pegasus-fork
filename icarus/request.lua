@@ -90,10 +90,6 @@ function Request:method()
     return self._method
 end
 
-function Request:goto(path)
-    
-end
-
 function Request:post()
     if self:method() ~= "POST" then return end
     local data = self:receiveBody()

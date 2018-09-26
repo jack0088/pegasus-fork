@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+if [ $1 == "start" ];
+then
+    if [ $2 == "--log" ];
+    then
+        lua server.lua bimbo &>log.txt & disown
+    else
+        lua server.lua bimbo & disown
+    fi
+fi
+
+
+if [ $1 == "stop" ];
+then
+    pkill -f bimbo
+fi
+
+
+exit
