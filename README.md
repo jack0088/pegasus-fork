@@ -1,8 +1,11 @@
-# TODO
+# Bimbo
 
-Create a Makefile to install this project and its dependencies on different, fresh machines without hassle...
+![logo](assets/bimbo.png)
 
-# Dependencies of the Pegasus HTTP Server
+a simplistic HTTP server run by pure Lua (>5.1)
+
+
+## Dependencies of the Pegasus HTTP Server
 
 luarocks install luacheck
 luarocks install mimetypes

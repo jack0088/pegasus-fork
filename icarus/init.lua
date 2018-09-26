@@ -11,9 +11,9 @@ function Pegasus:new(settings)
     settings = settings or {}
     self.host = settings.host or "*" -- * binds any client ip
     self.port = settings.port or 8888
+    self.timeout = settings.timeout or 1
     self.location = settings.location or ""
     self.plugins = settings.plugins or {}
-    self.timeout = settings.timeout or 1
     return self
 end
 
@@ -22,7 +22,7 @@ function Pegasus:run(callback)
     local server = assert(socket.bind(self.host, self.port))
     local ip, port = server:getsockname()
 
-    print(string.format("Pegasus is up on %s:%s", ip, port))
+    print(string.format("Pegasus is up on http://%s:%s", ip, port))
 
     while true do
         local client = server:accept()
