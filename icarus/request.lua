@@ -1,4 +1,4 @@
-local class = require("lib.class").class
+local class = require("lib.class")
 local Request = class()
 
 Request.PATTERN_METHOD = "^(.-)%s"

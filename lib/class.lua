@@ -100,8 +100,10 @@ local function class(base)
     return setmetatable(proxy, {__index = peek, __newindex = poke, __pairs = traverse, __call = instantiate})
 end
 
-return { -- NOTE Lua <= 5.1 does not support multiple returns, tables are the only option
-    class = class,
-    get = get,
-    set = set
-}
+-- return { -- NOTE Lua <= 5.1 does not support multiple returns, tables are the only option
+--     class = class,
+--     get = get,
+--     set = set
+-- }
+
+return setmetatable({class = class, get = get, set = set}, {__call = class}) -- NOTE Lua <= 5.1 does not support multiple returns, tables are the only option
