@@ -1,10 +1,21 @@
--- This function methods extend Lua tables to support inheritance and getter/setter properties.
--- Getters/Setters allow for private table properties or restricted read/write access.
--- Use `class()` to create an empty new class object
--- Use `class(Base)` to inherit/subclass from the 'Base' class object
--- Use `Klass.field = get(function() ... end)` to setup a getter (read only callback function) for the property
--- Use `Klass.field = set(function(value) ... end)` to setup a getter (write callback function) for the property
--- 2018 (c) kontakt@herrsch.de
+--[[
+    This functions extend Lua tables by support for inheritance and getter/setter properties.
+    Getters/Setters allow for private table properties or restricted read/write access.
+
+    Use `class()` to create an empty new class object
+    Use `class(BaseKlass)` to inherit/subclass from the 'BaseKlass' class object
+    NOTE there is no need to call parent constructor manually, e.g. `ChildKlass.new() ParentKlass.new(self) end` – if you do, an instance instead of inherit class is created!
+    Use `Klass.field = get(function() ... end)` to setup a getter (read only callback function) for the property
+    Use `Klass.field = set(function(new_value) ... end)` to setup a getter (write callback function) for the property
+
+    HOW GETTERS AND SETTERS WORK:
+
+    local Human = class()
+    Human.can_fly = false
+    Human.can_fly = set(error, "This is a read-only property!")
+    
+    2018 (c) kontakt@herrsch.de
+--]]
 
 if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua version
     local _pairs = pairs
@@ -15,11 +26,11 @@ if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua version
 end
 
 local wrapper = {__call = table.unpack or unpack}
-local function wrap(value, permission) return setmetatable({value, tostring(permission)}, wrapper) end
-local function unwrap(value, permission) if type(value) == "table" and getmetatable(value) == wrapper then return unwrap(value()) end return value, permission end -- recursive
+local function wrap(value, typeof) return setmetatable({value, tostring(typeof)}, wrapper) end
+local function unwrap(value, typeof) if type(value) == "table" and getmetatable(value) == wrapper then return unwrap(value()) end return value, typeof end -- recursive
 
-local function get(value) return wrap(value, "get") end
-local function set(value) return wrap(value, "set") end
+local function get(method) return wrap(method, "get") end
+local function set(method) return wrap(method, "set") end
 
 local function class(base)
     local proxy = {}
@@ -45,8 +56,8 @@ local function class(base)
     function instantiate(array, ...)
         assert(type(array) == "table", string.format("attempt to inherit from invalid base `%s`", array))
         local instance = class()
-        for k, v in pairs(copy(array)) do instance[k] = v end
-        if instance.new then instance:new(...) end
+        for k, v in pairs(copy(array)) do instance[k] = v end -- copy properies throughout entire inheritance chain
+        if instance.new then instance:new(...) end -- run parent constructor
         return instance
     end
 
@@ -69,20 +80,20 @@ local function class(base)
     end
 
     function poke(array, property, value)
-        local value, permission = unwrap(value)
+        local value, typeof = unwrap(value)
         local id = index(array, property)
         local getter, setter = getters[id], setters[id]
         local is_getter = type(getter) == "function"
         local is_setter = type(setter) == "function"
+
+        assert(not typeof or type(value) == "function", string.format("getter/setter property `%s` must be a function value", property))
+        assert(not typeof or not ((typeof == "get" and is_getter) or (typeof == "set" and is_setter)), string.format("attempt to redefine typeof of property `%s`", property))
         
-        assert(not permission or type(value) == "function", string.format("getter/setter property `%s` must be a function value", property))
-        assert(not permission or not ((permission == "get" and is_getter) or (permission == "set" and is_setter)), string.format("attempt to redefine permission of property `%s`", property))
-        
-        if permission == "get" then
+        if typeof == "get" then
             getters[id] = value -- cache get method
             stash[property] = value() -- make property visible to public (e.g. pairs iterator function)
             return stash[property]
-        elseif permission == "set" then
+        elseif typeof == "set" then
             setters[id] = value -- cache set method
             return nil
         end
@@ -100,10 +111,11 @@ local function class(base)
     return setmetatable(proxy, {__index = peek, __newindex = poke, __pairs = traverse, __call = instantiate})
 end
 
--- return { -- NOTE Lua <= 5.1 does not support multiple returns, tables are the only option
---     class = class,
---     get = get,
---     set = set
--- }
+--[[
+    NOTE that Lua 5.1.3 `require()` is implemented in static int ll_require (lua_State *L) in loadlib.c file.
+    This function always returns 1 as number of returned values on stack.
+    Means that functions can return multiple values, but files can not!
+--]]
 
-return setmetatable({class = class, get = get, set = set}, {__call = class}) -- NOTE Lua <= 5.1 does not support multiple returns, tables are the only option
+--return class, get, set
+return {class = class, get = get, set = set}
