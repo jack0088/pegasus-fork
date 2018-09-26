@@ -8,11 +8,36 @@
     Use `Klass.field = get(function() ... end)` to setup a getter (read only callback function) for the property
     Use `Klass.field = set(function(new_value) ... end)` to setup a getter (write callback function) for the property
 
-    HOW GETTERS AND SETTERS WORK:
+    # HOW GETTERS & SETTERS WORK:
+
+    ## MAKE READ-ONLY PROPERTIES:
 
     local Human = class()
     Human.can_fly = false
     Human.can_fly = set(error, "This is a read-only property!")
+
+    print(Human.can_fly) -- false (OK)
+    Human.can_fly = true -- ERROR (OK)
+
+    ## BIND PROPERTY TO OTHER VARIABLES (possibly ones with local context):
+
+    File: human.lua
+
+    local hidden = false
+    local Human = class(Skeleton)
+    Human.visible = get(function() return not hidden end)
+    Human.visible = set(function(toggle)
+        assert(type(toggle) == "boolean", "Human visibility toggle must be a boolean value!")
+        hidden = not toggle
+    end)
+    return Human
+
+    File: main.lua
+
+    local Human = require "Human"
+    print(Human.visible)   -- true (OK) the actual value stored in variable `hidden` is `false` but we negated it in the getter
+    Human.visible = true   -- (OK) will set the `hidden` variable to `false`
+    Human.visible = "nope" -- ERROR (OK) because `assert` in setter kicks in
     
     2018 (c) kontakt@herrsch.de
 --]]
@@ -62,7 +87,7 @@ local function class(base)
     local proxy = {}
     local stash = {}
     local getters = {}
-    local setters = {}
+    local setters = {} -- TODO inherit getters and setters so that subclasses respect e.g. read-only properties?
 
     function traverse(array)
         return pairs(stash or array)
