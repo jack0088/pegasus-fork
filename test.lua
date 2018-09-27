@@ -1,20 +1,47 @@
-local class = require "lib.class".class
-local get = require "lib.class".get
-local set = require "lib.class".set
-local printr = require "lib.pretty"
+local pretty = require "lib.pretty"
 
---local omnom = "omnonom"
+function empty_node()
+    local array = {}
 
-local mensch = class()
+    function pointer(method, object, property)
+        return string.format("%s:%s->%s", method, object, property)
+    end
 
-mensch.gaga = "om"
+    function get(obj, prop)
+        local id = pointer("get", obj, property)
+        return array[prop] or (handler[id] and handler[id]())
+    end
 
-mensch.foobar = get(function() return mensch.gaga end)
-mensch.foobar = set(function() mensch.gaga = new_value end)
+    function set(obj, prop, val)
+        local method, property = string.match(prop, "^([gset]*)_?(.+)")
+        if method and #method > 0 then
+            local id = pointer(method, obj, property)
+            handler[id] = val -- store getter
+            return
+        end
+        array[property] = val -- store plain value
+    end
 
--- print(mensch.gaga)
+    return setmetatable({}, {__index = get, __newindex = set})
+end
 
-local peter = class(mensch)
 
-peter.foobar = "hha"
-print(mensch.gaga, peter.super.foobar, peter.super.foobar, peter.foobar)
+function translate(x, y)
+    local node = empty_node()
+
+    node.foobar = "foobar"
+
+    function node:get_x()
+        print("__--__-")
+        return x
+    end
+
+    function node:set_x(val)
+        x = val
+    end
+
+    return node
+end
+
+local test = translate(1, 2)
+print(test.x, test.foobar)

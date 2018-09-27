@@ -54,7 +54,6 @@ local function concanate(tab, recurse, indent)
             if not first then
                 res = res .. '\n'
             end
-
             res = res .. format_value(k, v, indent)
             first = false
         end
