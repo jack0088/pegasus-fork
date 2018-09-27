@@ -43,7 +43,7 @@
 --]]
 
 
-if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua version
+if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua 5.1 shim
     local _pairs = pairs
     function pairs(array)
         local mt = getmetatable(array)
@@ -138,8 +138,16 @@ local function class(base)
         local is_setter = type(setter) == "function"
 
         assert(not typeof or type(value) == "function", string.format("getter/setter property `%s` must be a function value", property))
-        assert(not typeof or not ((typeof == "get" and is_getter) or (typeof == "set" and is_setter)), string.format("attempt to redefine typeof of property `%s`", property))
-        
+        assert(not typeof or not ((typeof == "get" and is_getter) or (typeof == "set" and is_setter)), string.format("attempt to redefine getter/setter handler of property `%s`", property))
+
+        do
+            getter = stash.super.__getters[id]
+            setter = stash.super.__setters[id]
+            is_getter = type(getter) == "function"
+            is_setter = type(setter) == "function"
+            assert(not typeof or not ((typeof == "get" and is_getter) or (typeof == "set" and is_setter)), string.format("attempt to redefine *parent* getter/setter handler of property `%s`", property))
+        end
+
         if typeof == "get" then
             getters[id] = value -- cache get method
             stash[property] = value() -- make property visible to public (e.g. pairs iterator function)
@@ -159,7 +167,7 @@ local function class(base)
     end
 
     poke(proxy, "super", get(function() return convert(base) end))
-    return setmetatable(proxy, {__index = peek, __newindex = poke, __pairs = traverse, __call = instantiate})
+    return setmetatable(proxy, {__index = peek, __newindex = poke, __pairs = traverse, __call = instantiate, __getters = getters, __setters = setters})
 end
 
 
