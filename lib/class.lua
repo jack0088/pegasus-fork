@@ -87,7 +87,7 @@ local function class(base)
     local proxy = {}
     local stash = {}
     local getters = {}
-    local setters = {} -- TODO inherit getters and setters so that subclasses respect e.g. read-only properties?
+    local setters = {}
 
     function traverse(array)
         return pairs(stash or array)
@@ -116,18 +116,18 @@ local function class(base)
         return string.format("%s: %s", array, property)
     end
 
-    function peek(array, property)
-        local value = stash[property] or (stash.super and stash.super()[property])
-        local id = index(array, property)
-        local getter = getters[id]
-        return type(getter) == "function" and getter() or value
-    end
-
     function convert(value)
         if type(value) == "table" and not getmetatable(value) then
             return instantiate(value) -- convert table value into class instance value; class() values remain untouched!
         end
         return value
+    end
+
+    function peek(array, property)
+        local value = stash[property] or (stash.super and stash.super()[property])
+        local id = index(array, property)
+        local getter = getters[id]
+        return type(getter) == "function" and getter() or value
     end
 
     function poke(array, property, value)
