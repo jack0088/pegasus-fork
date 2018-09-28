@@ -1,9 +1,6 @@
-
-
-
-function node_prototype()
+function object_prototype(use_strict)
     local registry = {}
-    local protected = true -- default property behaviour with existing getter/setter
+    local protected = type(use_strict) == "boolean" and use_strict or true -- default property policy with existing getter/setter
 
     function split(property)
         local prefix = string.lower(string.sub(property, 1, 4))
@@ -31,14 +28,14 @@ function node_prototype()
         local method, property = split(property)
         local id = pointer(method, object, property)
 
-        if method and #method > 0 then -- register getter/setter
-            assert(type(value) == "function", "Getter/Setter handler must be a `function` value!")
-            assert(type(registry[id]) == "nil" or protected == false, string.format("Can not assign value `%s` to property `%s` because property already has a %ster handler!", type(value), property, method))
+        if method then -- register getter/setter
+            assert(type(value) == "function", string.format("%ster must be a `function` value", method))
+            assert(type(registry[id]) == "nil" or protected == false, string.format("%ster has already been defined", method))
+            assert(type(registry[pointer(nil, object, property)]) == "nil" or protected == false, string.format("can not define %ster as property has already been assigned a value", method))
         else
             local setter = registry[pointer("set", object, property)]
-            if type(setter) ~= "nil" then
-                return setter(object, value) -- pipe value through setter
-            end
+            if type(setter) ~= "nil" then return setter(object, value) end -- pipe value through setter
+            assert(type(registry[pointer("get", object, property)]) == "nil" and type(registry[pointer("set", object, property)]) == "nil" or protected == false, string.format("can not assign value as %ster has already been defined", method))
         end
 
         registry[id] = value -- store value/getter/setter
@@ -57,7 +54,7 @@ end
 
 
 function translate(x, y)
-    local node = node_prototype()
+    local node = object_prototype()
 
     node.foo = "foob"
     node.bar = function() return "bar" end
@@ -71,6 +68,8 @@ function translate(x, y)
             "trans"
         }
     }
+
+    node.empty_node = object_prototype()
 
     function node:get_x()
         return x
@@ -99,6 +98,13 @@ print(test.x)
 -- test.foo = "k"
 -- print(test.foo, test.bar)
 
-print(pretty(test))
+function test.empty_node:get_haha()
+    print("ööööööö")
+end
+test.empty_node.haha = "haha"
+
+-- print(test.empty_node.haha)
+
+-- print(pretty(test.empty_node))
 
 -- function test:get_x() return "määehh :D" end -- this sould assert
