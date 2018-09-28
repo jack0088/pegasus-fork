@@ -42,11 +42,19 @@ function object_prototype(use_strict)
         return registry[id]
     end
 
+    function chain()
+        -- TODO implement chaining of objects (=nodes)
+        -- think about use cases - should it inherit or rather instanciate an forward copies?
+    end
+
     function show(object)
+        -- TODO implement custom iterator that only lists properties with plain values or values that have been returned by their getters
+        -- property key names must be listed de-hashed (without method type and special characters)
+        -- see http://lua-users.org/wiki/GeneralizedPairsAndIpairs
         return pairs(registry or object)
     end
 
-    return setmetatable({}, {__index = get, __newindex = set, __pairs = show})
+    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __pairs = show})
 end
 
 
@@ -66,7 +74,8 @@ function translate(x, y)
             "male",
             "female",
             "trans"
-        }
+        },
+        somethingcooool = object_prototype()
     }
 
     node.empty_node = object_prototype()
@@ -87,9 +96,9 @@ local pretty = require "lib.pretty"
 local test = translate(1, 2)
 
 
-print(test.x)
+-- print(test.x)
 test.x = 77
-print(test.x)
+-- print(test.x)
 -- print(test.foo, test.bar)
 -- test.bar = "gegegegegege"
 -- test.foo = "lkasdjfklajfkld"
@@ -101,10 +110,10 @@ print(test.x)
 function test.empty_node:get_haha()
     print("ööööööö")
 end
-test.empty_node.haha = "haha"
+-- test.empty_node.haha = "haha"
 
 -- print(test.empty_node.haha)
 
--- print(pretty(test.empty_node))
+print(pretty(test, 3))
 
 -- function test:get_x() return "määehh :D" end -- this sould assert
