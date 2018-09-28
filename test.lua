@@ -47,6 +47,10 @@ function object_prototype(use_strict)
         -- think about use cases - should it inherit or rather instanciate an forward copies?
     end
 
+    function run()
+        -- TODO
+    end
+
     function show(object)
         -- TODO implement custom iterator that only lists properties with plain values or values that have been returned by their getters
         -- property key names must be listed de-hashed (without method type and special characters)
@@ -54,7 +58,7 @@ function object_prototype(use_strict)
         return pairs(registry or object)
     end
 
-    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __pairs = show})
+    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __call = run, __pairs = show})
 end
 
 
