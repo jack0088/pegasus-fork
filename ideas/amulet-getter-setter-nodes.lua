@@ -1,3 +1,9 @@
+--[[
+
+    Here's an unfinished example about how we could try to implement amulet's node system instead of the conventional class system
+
+--]]
+
 function object_prototype(use_strict)
     local registry = {}
     local protected = type(use_strict) == "boolean" and use_strict or true -- default property policy with existing getter/setter
@@ -119,6 +125,6 @@ end
 
 -- print(test.empty_node.haha)
 
-print(pretty(test, 6))
+-- print(pretty(test, 6))
 
 -- function test:get_x() return "määehh :D" end -- this sould assert
