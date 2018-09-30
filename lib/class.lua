@@ -9,9 +9,17 @@ if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua 5.1 shim
 end
 
 
-local function class(use_strict)
+local function class(...)
     local registry = {}
+    local ancestors = {...}
+    local use_strict = ancestors[#ancestors]
     local protected = type(use_strict) == "boolean" and use_strict or true -- default property policy with existing getter/setter
+
+    if type(use_strict) == "boolean" then table.remove(ancestors) end
+    if #ancestors > 0 then
+        registry.get_super = function() return ancestors end
+        registry.set_super = function() error("cannot assign value to a read-only property") end
+    end
 
     function parse(property)
         local prefix = string.lower(string.sub(property, 1, 4))
@@ -33,11 +41,11 @@ local function class(use_strict)
         if method then -- register getter/setter
             assert(type(value) == "function", string.format("%ster must be a `function` value", method))
             assert(type(registry[key]) == "nil" or protected == false, string.format("%ster has already been defined", method))
-            assert(type(registry[property]) == "nil" or protected == false, string.format("can not define %ster for property that has already been assigned a value", method))
+            assert(type(registry[property]) == "nil" or protected == false, string.format("cannot define %ster for property that has already been assigned a value", method))
         else
             local setter = registry["set_"..property]
             if type(setter) ~= "nil" then return setter(object, value) end -- pipe value through setter
-            assert(type(registry["get_"..property]) == "nil" and type(registry["set_"..property]) == "nil" or protected == false, string.format("can not assign value as %ster has already been defined", method))
+            assert(type(registry["get_"..property]) == "nil" or protected == false, string.format("cannot assign value as setter is yet missing to the already defined getter", method))
         end
         registry[key] = value -- store value/getter/setter
         return registry[key]
@@ -53,33 +61,35 @@ local function class(use_strict)
         -- PS: or use the __le (>) metamethod instead of __pow (^)
     end
 
-    function show()
-        local key, value
-
-        function list()
-            key, value = next(registry, key)
-
-            if not (key and value) then
-                key, value = nil, nil -- reset
-                return -- iterator finished
-            end
-
+    function list()
+        local stack = {}
+        for key, value in next, registry do
             local method, property = parse(key)
-
-            if method then
-                if method == "get" then
-                    return property, value() -- key without method prefix; value as returned by getter
-                end
-                return list() -- skip setter
-            end
-
-            return key, value
+            if method == "get" and type(value) == "function" then value = value() end
+            if method ~= "set" then stack[property] = value end
         end
+        return next, stack
 
-        return list
+        -- local _key
+        -- function nxt(array)
+        --     local key, value = next(array, _key)
+        --     local method, property = parse(tostring(key))
+        --     if key and value then _key = key else _key = nil return end
+        --     if method == "get" and type(value) == "function" then value = value() end
+        --     if method ~= "set" then return property, value end
+        --     -- return nxt(array) -- skip
+        --     -- return ">>>"..key.."<<<", value -- TODO somehow skip these ones, maybe with try repeat loop and just return all k,v at first pairs() call
+        --     return key, nil
+        -- end
+        -- return nxt, registry
     end
 
-    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __call = run, __pairs = show})
+    function count()
+        -- TODO loop through show() and return the counted value
+        return 1
+    end
+
+    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __call = run, __pairs = list}) -- __len = count
 end
 
 
