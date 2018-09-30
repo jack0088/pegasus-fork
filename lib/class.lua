@@ -8,6 +8,7 @@ if _VERSION:match("[%d/.]+") <= "5.1" then -- Lua 5.1 shim
     end
 end
 
+
 local function class(use_strict)
     local registry = {}
     local protected = type(use_strict) == "boolean" and use_strict or true -- default property policy with existing getter/setter
@@ -52,7 +53,33 @@ local function class(use_strict)
         -- PS: or use the __le (>) metamethod instead of __pow (^)
     end
 
-    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __call = run, __pairs = function() return pairs(registry) end})
+    function show()
+        local key, value
+
+        function list()
+            key, value = next(registry, key)
+
+            if not (key and value) then
+                key, value = nil, nil -- reset
+                return -- iterator finished
+            end
+
+            local method, property = parse(key)
+
+            if method then
+                if method == "get" then
+                    return property, value() -- key without method prefix; value as returned by getter
+                end
+                return list() -- skip setter
+            end
+
+            return key, value
+        end
+
+        return list
+    end
+
+    return setmetatable({}, {__index = get, __newindex = set, __pow = chain, __call = run, __pairs = show})
 end
 
 
