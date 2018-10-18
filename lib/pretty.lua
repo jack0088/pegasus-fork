@@ -33,6 +33,8 @@ local function concanate(tab, recurse, indent)
             else
                 return formatting .. 'false'
             end
+        elseif type(v) == "string" then
+            return formatting .. "`"..tostring(v).."`"
         else
             return formatting .. tostring(v)
         end

@@ -1,4 +1,4 @@
-local class = require("lib.class")
+local class = require("lib.class").class
 local Request = class()
 
 Request.PATTERN_METHOD = "^(.-)%s"
@@ -122,7 +122,7 @@ function Request:receiveBody(size)
     end
 
     size = size or self._content_length
-    local fetch = math.min(self._content_length-self._content_done, size) -- fetch in chunks
+    local fetch = math.min(self._content_length - self._content_done, size) -- fetch in chunks
     local data, err, partial = self.client:receive(fetch)
 
     if err == "timeout" then
